@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --aqua-gradient: linear-gradient(135deg, #0891b2 0%, #164e63 100%);
+}
+
+body {
+  font-family: 'Outfit', system-ui, sans-serif;
+  background: linear-gradient(180deg, #f0fdfa 0%, #ecfeff 50%, #cffafe 100%);
+  min-height: 100vh;
+}
+
+/* Animation pour les gouttes d'eau */
+@keyframes droplet {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translateY(-10px) scale(1.1);
+    opacity: 1;
+  }
+}
+
+.animate-droplet {
+  animation: droplet 3s ease-in-out infinite;
+}
+
+/* Effet de vague */
+@keyframes wave {
+  0% {
+    transform: translateX(0) translateZ(0) scaleY(1);
+  }
+  50% {
+    transform: translateX(-25%) translateZ(0) scaleY(0.8);
+  }
+  100% {
+    transform: translateX(-50%) translateZ(0) scaleY(1);
+  }
+}
+
+.animate-wave {
+  animation: wave 8s linear infinite;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #ecfeff;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #0891b2;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #0e7490;
+}
+
+/* Messages du chat avec markdown basique */
+.chat-message strong {
+  font-weight: 600;
+  color: #164e63;
+}
+
+.chat-message ul {
+  list-style-type: disc;
+  margin-left: 1.5rem;
+  margin-top: 0.5rem;
+}
+
