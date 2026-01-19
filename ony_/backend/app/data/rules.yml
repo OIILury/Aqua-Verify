@@ -1,0 +1,30 @@
+profiles:
+  # Règles minimales, communes à tous les dossiers
+  base:
+    required_fields: []
+    required_documents: []
+
+  # Projet < 240m²
+  small:
+    required_fields:
+      # à activer quand l'extraction est en place
+      # - impermeabilized_area_m2
+      # - retention_volume_m3
+    required_documents:
+      # exemples (à ajuster selon votre réglementation / dossier attendu)
+      # - AVIS_EP
+      []
+
+  # Projet >= 240m²
+  big:
+    required_fields:
+      # à activer quand l'extraction est en place
+      # - impermeabilized_area_m2
+      # - retention_volume_m3
+      # - discharge_flow_l_s
+    required_documents:
+      # souvent attendu sur les gros projets (à valider)
+      # - AVIS_EP
+      []
+
+

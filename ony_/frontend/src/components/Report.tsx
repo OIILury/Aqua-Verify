@@ -166,6 +166,44 @@ export function Report({ report }: ReportProps) {
           </div>
         </div>
       )}
+
+      {/* Non-conformités réglementaires (niveau dossier) */}
+      {report.compliance_issues && report.compliance_issues.length > 0 && (
+        <div className="bg-white/80 backdrop-blur rounded-2xl p-6 shadow-lg">
+          <div className="flex items-center gap-2 mb-4">
+            <AlertTriangle className="w-6 h-6 text-orange-500" />
+            <h3 className="text-lg font-semibold text-aqua-900">
+              Non-conformités / points à corriger ({report.compliance_issues.length})
+            </h3>
+          </div>
+
+          <div className="grid gap-3">
+            {report.compliance_issues.map((issue, index) => (
+              <div key={index} className="p-4 bg-orange-50 rounded-xl border border-orange-100">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-orange-900">{issue.title}</p>
+                    <p className="text-sm text-orange-800 mt-1">{issue.message}</p>
+                    {issue.related_documents?.length > 0 && (
+                      <p className="text-xs text-orange-700 mt-2">
+                        <strong>Lié à :</strong> {issue.related_documents.join(', ')}
+                      </p>
+                    )}
+                    {issue.evidence && (
+                      <p className="text-xs text-orange-700 mt-2">
+                        <strong>Extrait :</strong> {issue.evidence}
+                      </p>
+                    )}
+                  </div>
+                  <span className="text-xs px-2 py-1 rounded-full bg-orange-100 text-orange-700 flex-shrink-0">
+                    {issue.severity}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

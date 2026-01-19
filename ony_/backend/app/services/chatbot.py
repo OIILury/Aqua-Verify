@@ -40,6 +40,11 @@ class ChatbotService:
         (r"(?:suis.je|est.ce que je suis|je suis)\s*(?:en\s*)?(?:règle|conforme)", "get_conformity_status"),
         (r"(?:mon\s*)?dossier\s*(?:est.il)?\s*(?:complet|conforme|valide)", "get_conformity_status"),
         (r"(?:quel\s*est\s*)?(?:le\s*)?(?:score|taux|pourcentage)\s*(?:de\s*)?conformité", "get_conformity_status"),
+
+        # Questions sur les non-conformités / corrections
+        (r"(?:qu'?est.ce\s*qui)\s*(?:n'?est\s*)?pas\s*conforme", "get_compliance_issues"),
+        (r"(?:quels?|quel)\s*(?:sont|est)?\s*(?:les?)?\s*(?:problèmes|erreurs|non.conformit[ée]s)", "get_compliance_issues"),
+        (r"(?:que\s*)?dois.je\s*(?:corriger|modifier|faire)", "get_compliance_issues"),
         
         # Questions sur les documents présents
         (r"(?:quels?|quel)\s*(?:sont|est)?\s*(?:les?)?\s*documents?\s*(?:présents?|fournis?|ok)", "get_present_docs"),
@@ -202,6 +207,20 @@ class ChatbotService:
             return "Aucune information détaillée n'a pu être extraite des documents."
         
         return "\n".join(response_parts)
+
+    def _handle_get_compliance_issues(self, match) -> str:
+        """Liste les non-conformités / points à corriger (niveau dossier)"""
+        if not self.report:
+            return "Je n'ai pas encore de rapport d'analyse. Veuillez d'abord déposer vos documents."
+
+        issues = getattr(self.report, "compliance_issues", None) or []
+        if not issues:
+            return "✅ Je n'ai détecté aucun point réglementaire bloquant (au-delà des documents manquants)."
+
+        lines = []
+        for issue in issues:
+            lines.append(f"• **{issue.title}** : {issue.message}")
+        return "⚠️ Voici les points à corriger / compléter :\n\n" + "\n".join(lines)
     
     def _handle_greet(self, match) -> str:
         """Salutation"""

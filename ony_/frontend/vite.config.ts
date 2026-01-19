@@ -7,7 +7,9 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        // Sur certains Windows, "localhost" peut résoudre en IPv6 (::1) et provoquer ECONNREFUSED
+        // si le backend n'écoute qu'en IPv4. Forcer 127.0.0.1 évite ce souci.
+        target: 'http://127.0.0.1:8000',
         changeOrigin: true,
       },
     },

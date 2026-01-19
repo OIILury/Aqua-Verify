@@ -35,7 +35,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="C:\Users\baptc\OneDrive\Documents\Cours\DefisChallenge\Aqua-Verify\ony\backend\.venv"
+VIRTUAL_ENV="C:\Users\baptc\OneDrive\Documents\Cours\DefisChallenge\Aqua-Verify\ony_\backend\.venv"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"

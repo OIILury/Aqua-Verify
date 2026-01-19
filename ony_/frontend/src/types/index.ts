@@ -19,6 +19,22 @@ export interface ProjectInfo {
   is_small_project?: boolean;
   address?: string;
   reference?: string;
+
+  // Infos utiles à la conformité "eaux pluviales" (à enrichir)
+  impermeabilized_area_m2?: number;
+  retention_volume_m3?: number;
+  discharge_flow_l_s?: number;
+  infiltration?: boolean;
+  retention?: boolean;
+}
+
+export interface ComplianceIssue {
+  code: string;
+  title: string;
+  severity: 'info' | 'warning' | 'error' | string;
+  message: string;
+  evidence?: string;
+  related_documents: string[];
 }
 
 export interface AnalysisReport {
@@ -28,6 +44,7 @@ export interface AnalysisReport {
   documents_manquants: string[];
   total_documents: number;
   conformity_score: number;
+  compliance_issues: ComplianceIssue[];
 }
 
 export interface ChatMessage {

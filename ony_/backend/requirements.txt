@@ -11,10 +11,23 @@ pypdf==4.0.1
 # Word Extraction
 python-docx==1.1.0
 
+# OCR (pour les PDF scannés / images)
+# Nécessite aussi l'installation de Tesseract sur la machine (binaire système).
+pytesseract==0.3.10
+
+# Pillow : utiliser une version récente avec wheel précompilé compatible Python 3.13
+Pillow==11.0.0
+
+# (Optionnel mais recommandé pour du pré-traitement avancé d'images)
+# opencv-python==4.10.0.84
+
 # Utilities
 pydantic==2.5.3
 pydantic-settings==2.1.0
 python-dotenv==1.0.0
+
+# Règles de conformité (YAML)
+PyYAML==6.0.3
 
 # CORS
 starlette==0.35.1

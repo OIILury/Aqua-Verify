@@ -8,6 +8,7 @@ from ..models.document import (
     Document, DocumentType, DocumentStatus, 
     AnalysisReport, ProjectInfo
 )
+from ..services.compliance import ComplianceEngine
 
 
 class DocumentAnalyzer:
@@ -238,6 +239,42 @@ class DocumentAnalyzer:
                     if match and not project_info.reference:
                         project_info.reference = match.group(1).strip()
                         break
+
+                # Indices "eaux pluviales" (heuristiques simples pour commencer)
+                if "infiltration" in text and project_info.infiltration is None:
+                    project_info.infiltration = True
+                if ("rétention" in text or "retention" in text or "bassin" in text) and project_info.retention is None:
+                    project_info.retention = True
+
+                # Volumes (m3) - ex: "volume de stockage : 120 m3"
+                volume_patterns = [
+                    r"volume\s*(?:de\s*)?(?:stockage|rétention|retention)?\s*[:\s]*(\d+(?:[.,]\d+)?)\s*m3",
+                    r"(\d+(?:[.,]\d+)?)\s*m3\s*(?:de\s*)?(?:stockage|rétention|retention)",
+                ]
+                for pattern in volume_patterns:
+                    match = re.search(pattern, text)
+                    if match:
+                        try:
+                            v = float(match.group(1).replace(",", "."))
+                            project_info.retention_volume_m3 = v
+                            break
+                        except ValueError:
+                            continue
+
+                # Débit de fuite (L/s) - ex: "débit de fuite: 5 l/s"
+                flow_patterns = [
+                    r"d[ée]bit\s*(?:de\s*)?fuite\s*[:\s]*(\d+(?:[.,]\d+)?)\s*l\s*/\s*s",
+                    r"(\d+(?:[.,]\d+)?)\s*l\s*/\s*s\s*(?:d[ée]bit\s*de\s*fuite)?",
+                ]
+                for pattern in flow_patterns:
+                    match = re.search(pattern, text)
+                    if match:
+                        try:
+                            q = float(match.group(1).replace(",", "."))
+                            project_info.discharge_flow_l_s = q
+                            break
+                        except ValueError:
+                            continue
         
         return project_info
     
@@ -291,6 +328,14 @@ class DocumentAnalyzer:
         
         # Extraire les infos du projet
         project_info = self.extract_project_info(documents)
+
+        # Évaluer les règles de conformité (niveau dossier)
+        compliance_engine = ComplianceEngine()
+        compliance_issues = compliance_engine.evaluate(
+            project_info=project_info,
+            documents=documents,
+            detected_types=list(found_types),
+        )
         
         # Calculer le score de conformité
         total_required = len(self.REQUIRED_DOCUMENTS)
@@ -303,6 +348,7 @@ class DocumentAnalyzer:
             documents_non_conformes=non_conformes,
             documents_manquants=missing_documents,
             total_documents=len(documents),
-            conformity_score=round(conformity_score, 1)
+            conformity_score=round(conformity_score, 1),
+            compliance_issues=compliance_issues,
         )
 

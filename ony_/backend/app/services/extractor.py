@@ -3,7 +3,7 @@ Service d'extraction de texte des documents PDF et Word
 """
 from __future__ import annotations
 
-from typing import Tuple
+from typing import Tuple, List
 import io
 
 # PDF: on privilégie PyMuPDF si dispo, sinon fallback pypdf (pur Python)
@@ -14,10 +14,33 @@ except Exception:  # pragma: no cover
 
 from pypdf import PdfReader
 from docx import Document as DocxDocument
+from PIL import Image
+import pytesseract
+
+# Sur Windows, on peut pointer explicitement vers le binaire tesseract pour éviter
+# les soucis de PATH. Adapte ce chemin si Tesseract est installé ailleurs.
+try:  # pragma: no cover - dépend de l'environnement
+    pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+except Exception as e:  # pragma: no cover
+    print(f"Impossible de configurer pytesseract_cmd: {e}")
 
 
 class TextExtractor:
     """Extracteur de texte pour PDF et Word"""
+    
+    @staticmethod
+    def _ocr_image(image: Image.Image) -> str:
+        """
+        Effectue un OCR sur une image via Tesseract.
+        On suppose que Tesseract est installé sur la machine (binaire système).
+        """
+        try:
+            # Langue française prioritaire (à ajuster si besoin).
+            text = pytesseract.image_to_string(image, lang="fra+eng")
+            return text or ""
+        except Exception as e:  # pragma: no cover - dépend du binaire système
+            print(f"Erreur OCR Tesseract: {e}")
+            return ""
     
     @staticmethod
     def extract_from_pdf(file_content: bytes) -> Tuple[str, bool]:
@@ -34,15 +57,30 @@ class TextExtractor:
         if fitz is not None:
             try:
                 doc = fitz.open(stream=file_content, filetype="pdf")
-                text_parts = []
+                text_parts: List[str] = []
 
                 for page_num in range(len(doc)):
                     page = doc[page_num]
                     text = page.get_text()
                     if text and text.strip():
+                        # Texte natif disponible : on l'utilise tel quel
                         text_parts.append(text)
+                    else:
+                        # Pas de texte extrait → tentative d'OCR sur l'image de la page
+                        try:
+                            pix = page.get_pixmap()
+                            img_bytes = pix.tobytes("png")
+                            image = Image.open(io.BytesIO(img_bytes))
+                            ocr_text = TextExtractor._ocr_image(image)
+                            if ocr_text and ocr_text.strip():
+                                text_parts.append(ocr_text)
+                        except Exception as e:  # pragma: no cover - dépend du runtime
+                            print(f"Erreur génération image pour OCR (PyMuPDF): {e}")
 
                 doc.close()
+                # Si on n'a vraiment rien récupéré, on indiquera un échec
+                if not text_parts:
+                    return "", False
                 return "\n".join(text_parts), True
             except Exception as e:
                 print(f"Erreur extraction PDF (PyMuPDF): {e}")
@@ -50,11 +88,16 @@ class TextExtractor:
         # 2) Fallback pypdf (pur Python, plus compatible)
         try:
             reader = PdfReader(io.BytesIO(file_content))
-            text_parts = []
+            text_parts: List[str] = []
             for page in reader.pages:
                 text = page.extract_text() or ""
                 if text.strip():
                     text_parts.append(text)
+
+            # Avec pypdf on ne gère pas l'OCR directement (pas de rendu image ici).
+            # Si aucun texte n'est trouvé, on signale un échec pour laisser la couche supérieure décider.
+            if not text_parts:
+                return "", False
             return "\n".join(text_parts), True
         except Exception as e:
             print(f"Erreur extraction PDF (pypdf): {e}")

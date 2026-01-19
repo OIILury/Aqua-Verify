@@ -48,6 +48,23 @@ class ProjectInfo(BaseModel):
     address: Optional[str] = None
     reference: Optional[str] = None
 
+    # Infos utiles à la conformité "eaux pluviales" (à enrichir progressivement)
+    impermeabilized_area_m2: Optional[float] = None  # surface imperméabilisée (m²)
+    retention_volume_m3: Optional[float] = None  # volume de rétention/stockage (m³)
+    discharge_flow_l_s: Optional[float] = None  # débit de fuite (L/s)
+    infiltration: Optional[bool] = None  # infiltration mentionnée / prévue
+    retention: Optional[bool] = None  # rétention/stockage mentionné / prévu
+
+
+class ComplianceIssue(BaseModel):
+    """Écart / non-conformité détectée par rapport aux règles (niveau dossier)"""
+    code: str  # identifiant stable (ex: "MISSING_SURFACE")
+    title: str
+    severity: str = "warning"  # "info" | "warning" | "error"
+    message: str
+    evidence: Optional[str] = None  # extrait de preuve (texte court)
+    related_documents: List[str] = []  # noms de fichiers ou types (ex: "CERFA", "PC2")
+
 
 class AnalysisReport(BaseModel):
     """Rapport d'analyse complet"""
@@ -57,6 +74,7 @@ class AnalysisReport(BaseModel):
     documents_manquants: List[str]
     total_documents: int
     conformity_score: float  # Pourcentage de conformité
+    compliance_issues: List[ComplianceIssue] = []  # écarts réglementaires (au-delà de la complétude)
 
 
 class ChatMessage(BaseModel):
