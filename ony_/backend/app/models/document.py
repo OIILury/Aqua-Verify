@@ -3,7 +3,7 @@ Modèles de données pour les documents
 """
 from enum import Enum
 from typing import List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class DocumentType(str, Enum):
@@ -16,6 +16,11 @@ class DocumentType(str, Enum):
     PC6 = "PC6"  # Document graphique d'insertion
     PC7 = "PC7"  # Photo environnement proche
     PC8 = "PC8"  # Photo paysage lointain
+    # Pièces pour permis d'aménager (PA)
+    PA1 = "PA1"  # Plan de situation du terrain
+    PA2 = "PA2"  # Notice décrivant le terrain et le projet d'aménagement
+    PA3 = "PA3"  # Plan de l'état actuel du terrain et de ses abords
+    PA4 = "PA4"  # Plan de composition d'ensemble du projet
     CERFA = "CERFA"  # Formulaire CERFA
     AVIS_EP = "AVIS_EP"  # Avis Eaux Pluviales
     AVIS_DEA = "AVIS_DEA"  # Avis DEA
@@ -38,6 +43,8 @@ class Document(BaseModel):
     status: DocumentStatus
     confidence: float  # Score de confiance de l'identification (0-1)
     extracted_text: Optional[str] = None
+    # Texte complet OCRisé (utile pour extraction d'infos), non renvoyé au frontend
+    full_text: Optional[str] = Field(default=None, exclude=True)
     issues: List[str] = []  # Problèmes détectés
 
 

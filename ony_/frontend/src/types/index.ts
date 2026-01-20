@@ -1,6 +1,7 @@
 // Types pour les documents
 export type DocumentType = 
   | 'PC1' | 'PC2' | 'PC3' | 'PC4' | 'PC5' | 'PC6' | 'PC7' | 'PC8'
+  | 'PA1' | 'PA2' | 'PA3' | 'PA4'
   | 'CERFA' | 'AVIS_EP' | 'AVIS_DEA' | 'DPC' | 'COUPE_BASSIN' | 'AUTRE';
 
 export type DocumentStatus = 'conforme' | 'non_conforme' | 'manquant';
@@ -62,6 +63,10 @@ export const DOCUMENT_LABELS: Record<DocumentType, string> = {
   PC6: "Document d'insertion",
   PC7: 'Photo env. proche',
   PC8: 'Photo paysage lointain',
+  PA1: 'PA1 - Plan de situation (aménagement)',
+  PA2: 'PA2 - Notice d’aménagement',
+  PA3: 'PA3 - Plan de l’état actuel',
+  PA4: 'PA4 - Plan de composition d’ensemble',
   CERFA: 'Formulaire CERFA',
   AVIS_EP: 'Avis Eaux Pluviales',
   AVIS_DEA: 'Avis DEA',

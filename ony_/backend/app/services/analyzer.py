@@ -3,7 +3,7 @@ Service d'analyse rule-based des documents
 Système fait maison sans LLM pré-entraîné
 """
 import re
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional, Tuple, Iterable
 from ..models.document import (
     Document, DocumentType, DocumentStatus, 
     AnalysisReport, ProjectInfo
@@ -17,18 +17,28 @@ class DocumentAnalyzer:
     Identifie les types de documents et vérifie leur conformité.
     """
     
-    # Documents obligatoires pour un permis de construire
-    REQUIRED_DOCUMENTS = [
-        DocumentType.PC1,
-        DocumentType.PC2,
-        DocumentType.PC3,
-        DocumentType.PC4,
-        DocumentType.PC5,
-        DocumentType.PC6,
-        DocumentType.PC7,
-        DocumentType.PC8,
-        DocumentType.CERFA,
-    ]
+    # Documents obligatoires par type de dossier
+    REQUIRED_DOCUMENTS_BY_CASE = {
+        # Permis de construire
+        "PC": [
+            DocumentType.PC1,
+            DocumentType.PC2,
+            DocumentType.PC3,
+            DocumentType.PC4,
+            DocumentType.PC5,
+            DocumentType.PC6,
+            DocumentType.PC7,
+            DocumentType.PC8,
+            DocumentType.CERFA,
+        ],
+        # Permis d'aménager (préparé pour usage futur)
+        "PA": [
+            DocumentType.PA1,
+            DocumentType.PA2,
+            DocumentType.PA3,
+            DocumentType.PA4,
+        ],
+    }
     
     # Mots-clés pour identifier chaque type de document
     # Format: {DocumentType: {"filename": [...], "content": [...]}}
@@ -120,12 +130,83 @@ class DocumentAnalyzer:
                 "ouvrage de stockage", "volume de stockage"
             ]
         },
+        # Pièces pour permis d'aménager
+        DocumentType.PA1: {
+            "filename": ["pa1", "situation", "localisation", "cadastre"],
+            "content": [
+                "plan de situation", "situation du terrain",
+                "extrait cadastral", "plan de cadastre"
+            ]
+        },
+        DocumentType.PA2: {
+            "filename": ["pa2", "notice", "description", "descriptif"],
+            "content": [
+                "notice descriptive", "notice d'aménagement",
+                "description du terrain", "présentation du projet d'aménagement"
+            ]
+        },
+        DocumentType.PA3: {
+            "filename": ["pa3", "etat actuel", "etat des lieux", "existant"],
+            "content": [
+                "plan de l'état actuel", "état des lieux",
+                "plan de l'état des lieux", "état actuel du terrain"
+            ]
+        },
+        DocumentType.PA4: {
+            "filename": ["pa4", "composition", "ensemble", "3d", "perspective"],
+            "content": [
+                "plan de composition d'ensemble", "composition d'ensemble",
+                "vue 3d", "perspective du projet", "plan d'ensemble du projet"
+            ]
+        },
     }
     
-    def __init__(self):
-        """Initialise l'analyseur"""
+    def __init__(self, case_type: str = "PC"):
+        """Initialise l'analyseur
+        
+        Args:
+            case_type: Type de dossier ("PC" pour permis de construire,
+                       "PA" pour permis d'aménager, etc.).
+        """
         self.analyzed_documents: List[Document] = []
         self.project_info = ProjectInfo()
+        self.case_type = case_type.upper() if case_type else "PC"
+        self._candidate_types = set(self._get_candidate_types(self.case_type))
+
+    def _get_candidate_types(self, case_type: str) -> Iterable[DocumentType]:
+        """
+        Retourne les types de documents à considérer pour l'identification,
+        afin d'éviter les confusions entre familles (PC vs PA).
+        """
+        common = [
+            DocumentType.AVIS_EP,
+            DocumentType.AVIS_DEA,
+            DocumentType.DPC,
+            DocumentType.COUPE_BASSIN,
+        ]
+
+        if case_type == "PA":
+            return [
+                DocumentType.PA1,
+                DocumentType.PA2,
+                DocumentType.PA3,
+                DocumentType.PA4,
+                *common,
+            ]
+
+        # Par défaut : PC
+        return [
+            DocumentType.PC1,
+            DocumentType.PC2,
+            DocumentType.PC3,
+            DocumentType.PC4,
+            DocumentType.PC5,
+            DocumentType.PC6,
+            DocumentType.PC7,
+            DocumentType.PC8,
+            DocumentType.CERFA,
+            *common,
+        ]
     
     def identify_document_type(
         self, 
@@ -147,8 +228,28 @@ class DocumentAnalyzer:
         
         best_match = DocumentType.AUTRE
         best_score = 0.0
-        
+
+        # 1) Heuristique "cartouche" très forte : PC1..PC8 / PA1..PA4 explicite
+        if content_lower:
+            # On ne regarde que le début du document (cartouche / titre)
+            header = content_lower[:600]
+            cartouche_match = re.search(r"\b(pc\s*[1-8]|pa\s*[1-4])\b", header)
+            if cartouche_match:
+                raw_code = cartouche_match.group(1)
+                piece_code = raw_code.replace(" ", "").upper()  # "pc 4" -> "PC4"
+                try:
+                    doc_type = DocumentType[piece_code]
+                    # On respecte le filtre PC/PA pour éviter de tagger un PA en PC quand on est en mode PC
+                    if doc_type in self._candidate_types:
+                        return doc_type, 0.99
+                except KeyError:
+                    pass
+
+        # 2) Scoring classique basé sur mots-clés
         for doc_type, rules in self.IDENTIFICATION_RULES.items():
+            # Évite les confusions PC/PA : on ne compare que les types pertinents
+            if doc_type not in self._candidate_types:
+                continue
             score = 0.0
             matches = 0
             total_checks = 0
@@ -170,7 +271,12 @@ class DocumentAnalyzer:
             # Normaliser le score
             if total_checks > 0:
                 normalized_score = min(score / (total_checks * 0.3), 1.0)
-                
+
+                # Bonus fort si le code de pièce apparaît clairement dans le nom du fichier (ex: "PC4_Notice.pdf")
+                piece_code = doc_type.value.lower()
+                if piece_code in filename_lower:
+                    normalized_score = min(1.0, normalized_score + 0.4)
+
                 if normalized_score > best_score:
                     best_score = normalized_score
                     best_match = doc_type
@@ -195,11 +301,15 @@ class DocumentAnalyzer:
         
         # Chercher dans le CERFA ou la notice pour les infos du projet
         for doc in documents:
-            if doc.extracted_text:
-                text = doc.extracted_text.lower()
+            source_text = doc.full_text or doc.extracted_text
+            if source_text:
+                text = source_text.lower()
                 
                 # Chercher la surface
                 surface_patterns = [
+                    # CERFA (souvent: "Surface de plancher créée", "Surface de plancher : 123 m²", etc.)
+                    r"surface\s*de\s*plancher\s*cr[ée]e\s*[:\s]*(\d[\d\s]*(?:[.,]\d+)?)\s*m\s*[²2]",
+                    r"surface\s*de\s*plancher\s*(?:totale)?\s*[:\s]*(\d[\d\s]*(?:[.,]\d+)?)\s*m\s*[²2]",
                     r"surface\s*(?:de\s*plancher|totale)?\s*[:\s]*(\d+(?:[.,]\d+)?)\s*m",
                     r"(\d+(?:[.,]\d+)?)\s*m[²2]\s*(?:de\s*)?(?:surface|plancher)",
                     r"surface\s*[:\s]*(\d+(?:[.,]\d+)?)",
@@ -209,7 +319,8 @@ class DocumentAnalyzer:
                     match = re.search(pattern, text)
                     if match:
                         try:
-                            surface = float(match.group(1).replace(",", "."))
+                            raw = match.group(1).replace(" ", "").replace("\u00A0", "")
+                            surface = float(raw.replace(",", "."))
                             project_info.surface_m2 = surface
                             project_info.is_small_project = surface < 240
                             break
@@ -310,15 +421,17 @@ class DocumentAnalyzer:
                 document_type=doc_type,
                 status=status,
                 confidence=confidence,
-                extracted_text=content[:1000] if content else None,  # Limiter la taille
+                extracted_text=content[:1000] if content else None,  # Extrait court (UI)
+                full_text=content if content else None,  # Texte complet (extraction interne)
                 issues=[]
             )
             
             documents.append(doc)
         
-        # Identifier les documents manquants
+        # Identifier les documents manquants en fonction du type de dossier
+        required_list = self.REQUIRED_DOCUMENTS_BY_CASE.get(self.case_type, self.REQUIRED_DOCUMENTS_BY_CASE["PC"])
         missing_documents = []
-        for required in self.REQUIRED_DOCUMENTS:
+        for required in required_list:
             if required not in found_types:
                 missing_documents.append(required.value)
         
@@ -338,8 +451,8 @@ class DocumentAnalyzer:
         )
         
         # Calculer le score de conformité
-        total_required = len(self.REQUIRED_DOCUMENTS)
-        found_required = len([d for d in documents if d.document_type in self.REQUIRED_DOCUMENTS])
+        total_required = len(required_list)
+        found_required = len([d for d in documents if d.document_type in required_list])
         conformity_score = (found_required / total_required) * 100 if total_required > 0 else 0
         
         return AnalysisReport(

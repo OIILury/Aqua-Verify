@@ -1,7 +1,7 @@
 """
 Routes API pour Aqua Verify
 """
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Query
 from typing import List
 from ..models.document import AnalysisReport, ChatRequest, ChatMessage
 from ..services.extractor import TextExtractor
@@ -16,7 +16,10 @@ chatbot = ChatbotService()
 
 
 @router.post("/analyze", response_model=AnalysisReport)
-async def analyze_documents(files: List[UploadFile] = File(...)):
+async def analyze_documents(
+    files: List[UploadFile] = File(...),
+    case_type: str = Query("PC", description="Type de dossier: PC (permis de construire) ou PA (permis d'aménager)"),
+):
     """
     Analyse une liste de documents uploadés.
     
@@ -54,7 +57,7 @@ async def analyze_documents(files: List[UploadFile] = File(...)):
         )
     
     # Analyser les documents
-    analyzer = DocumentAnalyzer()
+    analyzer = DocumentAnalyzer(case_type=case_type)
     report = analyzer.analyze_documents(extracted_files)
     
     # Mettre à jour le contexte du chatbot

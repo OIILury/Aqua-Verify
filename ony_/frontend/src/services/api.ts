@@ -5,14 +5,19 @@ const API_BASE = '/api';
 /**
  * Analyse les documents uploadés
  */
-export async function analyzeDocuments(files: File[]): Promise<AnalysisReport> {
+export async function analyzeDocuments(
+  files: File[],
+  caseType: 'PC' | 'PA' = 'PC'
+): Promise<AnalysisReport> {
   const formData = new FormData();
   
   files.forEach((file) => {
     formData.append('files', file);
   });
+
+  const params = new URLSearchParams({ case_type: caseType });
   
-  const response = await fetch(`${API_BASE}/analyze`, {
+  const response = await fetch(`${API_BASE}/analyze?${params.toString()}`, {
     method: 'POST',
     body: formData,
   });

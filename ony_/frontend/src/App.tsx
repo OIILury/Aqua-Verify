@@ -8,13 +8,14 @@ function App() {
   const [report, setReport] = useState<AnalysisReport | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [caseType, setCaseType] = useState<'PC' | 'PA'>('PC');
 
   const handleFilesSelected = async (files: File[]) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const result = await analyzeDocuments(files);
+      const result = await analyzeDocuments(files, caseType);
       setReport(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue');
@@ -74,11 +75,42 @@ function App() {
           <div className="max-w-2xl mx-auto">
             <div className="text-center mb-8">
               <h2 className="text-2xl font-semibold text-aqua-900">
-                Vérifiez votre dossier de permis de construire
+                Vérifiez votre dossier d&apos;urbanisme
               </h2>
               <p className="text-aqua-600 mt-2">
-                Déposez vos documents pour vérifier leur conformité avec le zonage des eaux pluviales
+                Choisissez le type de demande, puis déposez vos documents pour vérifier leur conformité avec le zonage des eaux pluviales
               </p>
+            </div>
+
+            {/* Sélecteur de type de dossier */}
+            <div className="mb-6 flex flex-wrap items-center justify-center gap-4">
+              <span className="text-sm font-medium text-aqua-800">
+                Type de demande :
+              </span>
+              <div className="inline-flex rounded-full bg-white/70 p-1 shadow-sm">
+                <button
+                  type="button"
+                  onClick={() => setCaseType('PC')}
+                  className={`px-4 py-2 text-sm font-medium rounded-full transition-all ${
+                    caseType === 'PC'
+                      ? 'bg-aqua-600 text-white shadow-md'
+                      : 'text-aqua-700 hover:bg-aqua-50'
+                  }`}
+                >
+                  Permis de construire
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCaseType('PA')}
+                  className={`px-4 py-2 text-sm font-medium rounded-full transition-all ${
+                    caseType === 'PA'
+                      ? 'bg-aqua-600 text-white shadow-md'
+                      : 'text-aqua-700 hover:bg-aqua-50'
+                  }`}
+                >
+                  Permis d&apos;aménager
+                </button>
+              </div>
             </div>
             
             <DropZone onFilesSelected={handleFilesSelected} isLoading={isLoading} />
@@ -86,8 +118,8 @@ function App() {
             {/* Infos */}
             <div className="mt-8 grid grid-cols-3 gap-4 text-center">
               <div className="p-4 bg-white/50 rounded-xl">
-                <div className="text-2xl font-bold text-aqua-700">PC1-PC8</div>
-                <div className="text-sm text-aqua-600">Documents vérifiés</div>
+                <div className="text-2xl font-bold text-aqua-700">PC / PA</div>
+                <div className="text-sm text-aqua-600">Types de dossiers</div>
               </div>
               <div className="p-4 bg-white/50 rounded-xl">
                 <div className="text-2xl font-bold text-aqua-700">PDF/DOCX</div>
