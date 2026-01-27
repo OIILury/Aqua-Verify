@@ -5,26 +5,35 @@ profiles:
     required_documents: []
 
   # Projet < 240m²
+  # Selon règles du fichier "Untitled" :
+  # - Formulaire d'instruction (CERFA) ✅ déjà requis par défaut
+  # - Plan de masse (PC2) ✅ déjà requis par défaut
+  # - Cartographie du ruissellement
+  # - Calcul surface imperméabilisée (champ)
+  # - Test d'infiltration (document ou champ)
+  # - Calcul volume à mettre en œuvre (champ)
   small:
     required_fields:
-      # à activer quand l'extraction est en place
-      # - impermeabilized_area_m2
-      # - retention_volume_m3
+      - impermeabilized_area_m2
+      - calculated_volume_m3
     required_documents:
-      # exemples (à ajuster selon votre réglementation / dossier attendu)
-      # - AVIS_EP
-      []
+      - CARTOGRAPHIE_RUISSELLEMENT
 
   # Projet >= 240m²
+  # Selon règles du fichier "Untitled" :
+  # - Note de calcul DEA
+  # - Plan de masse (PC2) ✅ déjà requis par défaut
+  # - Test de perméabilité Matsuo
+  # - Rétention pluie >15mm et >45mm (champs)
+  # - Calcul volume à mettre en œuvre (champ)
   big:
     required_fields:
-      # à activer quand l'extraction est en place
-      # - impermeabilized_area_m2
-      # - retention_volume_m3
-      # - discharge_flow_l_s
+      - impermeabilized_area_m2
+      - calculated_volume_m3
+      - retention_rain_15mm
+      - retention_rain_45mm
     required_documents:
-      # souvent attendu sur les gros projets (à valider)
-      # - AVIS_EP
-      []
+      - NOTE_CALCUL_DEA
+      - TEST_MATSUO
 
 

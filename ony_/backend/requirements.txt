@@ -25,6 +25,7 @@ Pillow==11.0.0
 pydantic==2.5.3
 pydantic-settings==2.1.0
 python-dotenv==1.0.0
+httpx==0.27.2
 
 # Règles de conformité (YAML)
 PyYAML==6.0.3

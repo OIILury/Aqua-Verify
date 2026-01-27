@@ -47,6 +47,8 @@ class DocumentAnalyzer:
             "filename": ["cerfa", "formulaire"],
             "content": [
                 "cerfa", "demande de permis", "permis de construire",
+                "demande de permis d'aménager",
+                "permis d'aménager",
                 "code de l'urbanisme", "déclaration préalable",
                 "n° 13406", "n° 13409"
             ]
@@ -55,7 +57,9 @@ class DocumentAnalyzer:
             "filename": ["pc1", "situation", "localisation"],
             "content": [
                 "plan de situation", "situation du terrain",
-                "localisation", "extrait cadastral", "cadastre"
+                "localisation", "extrait cadastral", "cadastre",
+                "références cadastrales",
+                "parcelle cadastrale"
             ]
         },
         DocumentType.PC2: {
@@ -70,7 +74,8 @@ class DocumentAnalyzer:
             "filename": ["pc3", "coupe", "profil"],
             "content": [
                 "plan en coupe", "coupe du terrain", "profil",
-                "altimétrie", "niveau du sol", "terrain naturel"
+                "altimétrie", "niveau du sol", "terrain naturel",
+                "profil du terrain naturel"
             ]
         },
         DocumentType.PC4: {
@@ -78,14 +83,17 @@ class DocumentAnalyzer:
             "content": [
                 "notice descriptive", "notice explicative",
                 "description du terrain", "présentation du projet",
-                "état initial", "projet architectural"
+                "état initial", "projet architectural",
+                "notice décrivant le terrain et le projet",
+                "courte description du projet"
             ]
         },
         DocumentType.PC5: {
             "filename": ["pc5", "facade", "façade", "toiture", "elevation"],
             "content": [
                 "plan des façades", "façades", "toitures",
-                "élévation", "vue de face", "pignon"
+                "élévation", "vue de face", "pignon",
+                "plan des façades et des toitures"
             ]
         },
         DocumentType.PC6: {
@@ -99,28 +107,32 @@ class DocumentAnalyzer:
             "filename": ["pc7", "photo", "environnement", "proche"],
             "content": [
                 "photographie", "environnement proche",
-                "vue rapprochée", "abords immédiats"
+                "vue rapprochée", "abords immédiats",
+                "photographie environnement proche"
             ]
         },
         DocumentType.PC8: {
             "filename": ["pc8", "photo", "paysage", "lointain"],
             "content": [
                 "photographie", "paysage lointain",
-                "vue éloignée", "environnement large"
+                "vue éloignée", "environnement large",
+                "photographie paysage lointain"
             ]
         },
         DocumentType.AVIS_EP: {
             "filename": ["ep", "eaux pluviales", "pluvial"],
             "content": [
                 "eaux pluviales", "gestion des eaux",
-                "infiltration", "rétention", "bassin"
+                "infiltration", "rétention", "bassin",
+                "loi sur l'eau"
             ]
         },
         DocumentType.AVIS_DEA: {
             "filename": ["dea", "assainissement"],
             "content": [
                 "direction de l'eau", "assainissement",
-                "raccordement", "eaux usées"
+                "raccordement", "eaux usées",
+                "installations individuelles d'assainissement"
             ]
         },
         DocumentType.COUPE_BASSIN: {
@@ -128,6 +140,37 @@ class DocumentAnalyzer:
             "content": [
                 "coupe bassin", "bassin de rétention",
                 "ouvrage de stockage", "volume de stockage"
+            ]
+        },
+        DocumentType.CARTOGRAPHIE_RUISSELLEMENT: {
+            "filename": ["cartographie", "ruissellement", "ruissellement"],
+            "content": [
+                "cartographie du ruissellement", "cartographie ruissellement",
+                "carte du ruissellement", "plan de ruissellement"
+            ]
+        },
+        DocumentType.NOTE_CALCUL_DEA: {
+            "filename": ["note calcul", "calcul dea", "dimensionnement"],
+            "content": [
+                "note de calcul", "justifiant du dimensionnement",
+                "dimensionnement du dispositif de rétention",
+                "note de calcul dea", "calcul dispositif eaux pluviales"
+            ]
+        },
+        DocumentType.TEST_INFILTRATION: {
+            "filename": ["test infiltration", "infiltration", "perméabilité"],
+            "content": [
+                "test d'infiltration", "test infiltration",
+                "essai d'infiltration", "essai infiltration",
+                "vitesse d'infiltration"
+            ]
+        },
+        DocumentType.TEST_MATSUO: {
+            "filename": ["matsuo", "test matsuo", "perméabilité matsuo"],
+            "content": [
+                "test de perméabilité de type matsuo",
+                "test matsuo", "essai matsuo",
+                "perméabilité matsuo", "test de perméabilité matsuo"
             ]
         },
         # Pièces pour permis d'aménager
@@ -183,6 +226,10 @@ class DocumentAnalyzer:
             DocumentType.AVIS_DEA,
             DocumentType.DPC,
             DocumentType.COUPE_BASSIN,
+            DocumentType.CARTOGRAPHIE_RUISSELLEMENT,
+            DocumentType.NOTE_CALCUL_DEA,
+            DocumentType.TEST_INFILTRATION,
+            DocumentType.TEST_MATSUO,
         ]
 
         if case_type == "PA":
@@ -232,11 +279,13 @@ class DocumentAnalyzer:
         # 1) Heuristique "cartouche" très forte : PC1..PC8 / PA1..PA4 explicite
         if content_lower:
             # On ne regarde que le début du document (cartouche / titre)
-            header = content_lower[:600]
-            cartouche_match = re.search(r"\b(pc\s*[1-8]|pa\s*[1-4])\b", header)
+            # On autorise les zéros : "PC03", "PC 03", etc.
+            header = content_lower[:1500]
+            cartouche_match = re.search(r"\b(p[ca])\s*0*([1-8])\b", header)
             if cartouche_match:
-                raw_code = cartouche_match.group(1)
-                piece_code = raw_code.replace(" ", "").upper()  # "pc 4" -> "PC4"
+                family = cartouche_match.group(1).upper()  # "pc" ou "pa"
+                index = cartouche_match.group(2)
+                piece_code = f"{family}{index}"  # "PC3", "PA2", etc.
                 try:
                     doc_type = DocumentType[piece_code]
                     # On respecte le filtre PC/PA pour éviter de tagger un PA en PC quand on est en mode PC
@@ -245,7 +294,32 @@ class DocumentAnalyzer:
                 except KeyError:
                     pass
 
-        # 2) Scoring classique basé sur mots-clés
+        # 2) Raccourcis très forts basés sur des expressions typiques
+        #    (avant de lancer le scoring détaillé)
+        #    ⚠ On évite de les appliquer sur les CERFA pour ne pas
+        #      confondre un formulaire avec un plan de masse / coupe.
+        if content_lower and "cerfa" not in filename_lower:
+            strong_pc3_keywords = [
+                "coupe transversale",
+                "coupe longitudinale",
+                "coupe a-a",
+                "coupe b-b",
+            ]
+            strong_pc2_keywords = [
+                "plan de masse",
+                "pc03 masse",
+                "pc3 masse",
+            ]
+
+            if any(kw in content_lower for kw in strong_pc3_keywords):
+                if DocumentType.PC3 in self._candidate_types:
+                    return DocumentType.PC3, 0.99
+
+            if any(kw in content_lower for kw in strong_pc2_keywords):
+                if DocumentType.PC2 in self._candidate_types:
+                    return DocumentType.PC2, 0.99
+
+        # 3) Scoring classique basé sur mots-clés
         for doc_type, rules in self.IDENTIFICATION_RULES.items():
             # Évite les confusions PC/PA : on ne compare que les types pertinents
             if doc_type not in self._candidate_types:
@@ -302,19 +376,88 @@ class DocumentAnalyzer:
         # Chercher dans le CERFA ou la notice pour les infos du projet
         for doc in documents:
             source_text = doc.full_text or doc.extracted_text
-            if source_text:
-                text = source_text.lower()
-                
-                # Chercher la surface
+            if not source_text:
+                continue
+
+            text = source_text.lower()
+
+            # --- Cas particulier : CERFA, où plusieurs surfaces coexistent (existante / créée / totale) ---
+            if doc.document_type == DocumentType.CERFA:
+                # On essaie d'abord de lire la ligne du tableau "Surfaces totales (en m²)"
+                lines = source_text.splitlines()
+                total_line_vals: List[float] = []
+                for raw_line in lines:
+                    line = raw_line.lower()
+                    if "surfaces totales" in line and "m²" in line or "m2" in line:
+                        # Extraire tous les nombres de la ligne (chaque colonne = une valeur)
+                        for m in re.finditer(r"(\d[\d\s]*(?:[.,]\d+)?)", line):
+                            raw_v = m.group(1).replace(" ", "").replace("\u00A0", "")
+                            try:
+                                total_line_vals.append(float(raw_v.replace(",", ".")))
+                            except ValueError:
+                                continue
+                if total_line_vals:
+                    # Hypothèse simple : la plus grande valeur de la ligne correspond
+                    # à la surface totale du projet après travaux.
+                    best_surface = max(total_line_vals)
+                    project_info.surface_m2 = best_surface
+                    project_info.is_small_project = best_surface < 240
+                    # On continue ensuite pour extraire d'autres infos (adresse, EP, etc.)
+                else:
+                    # Fallback : ancienne logique (existante / créée / totale via libellés texte)
+                    existing_val: Optional[float] = None
+                    created_val: Optional[float] = None
+                    total_val: Optional[float] = None
+
+                    existing_patterns = [
+                        r"surface\s*de\s*plancher\s*(?:existante|avant\s*travaux).*?(\d[\d\s]*(?:[.,]\d+)?)\s*m\s*[²2]",
+                        r"surface\s*de\s*plancher.*?dont\s*existante.*?(\d[\d\s]*(?:[.,]\d+)?)\s*m\s*[²2]",
+                    ]
+                    created_patterns = [
+                        r"surface\s*de\s*plancher\s*cr[ée]e.*?(\d[\d\s]*(?:[.,]\d+)?)\s*m\s*[²2]",
+                        r"surface\s*de\s*plancher.*?dont\s*cr[ée]e.*?(\d[\d\s]*(?:[.,]\d+)?)\s*m\s*[²2]",
+                    ]
+                    total_patterns = [
+                        r"surface\s*de\s*plancher\s*(?:totale|ap.r.s\s*travaux).*?(\d[\d\s]*(?:[.,]\d+)?)\s*m\s*[²2]",
+                    ]
+
+                    def _parse_first(patterns: List[str]) -> Optional[float]:
+                        for p in patterns:
+                            m = re.search(p, text)
+                            if m:
+                                raw_v = m.group(1).replace(" ", "").replace("\u00A0", "")
+                                try:
+                                    return float(raw_v.replace(",", "."))
+                                except ValueError:
+                                    continue
+                        return None
+
+                    existing_val = _parse_first(existing_patterns)
+                    created_val = _parse_first(created_patterns)
+                    total_val = _parse_first(total_patterns)
+
+                    candidates: List[float] = []
+                    if total_val is not None:
+                        candidates.append(total_val)
+                    if existing_val is not None and created_val is not None:
+                        candidates.append(existing_val + created_val)
+
+                    # Si on a au moins un candidat cohérent, on privilégie la valeur maximale
+                    if candidates:
+                        best_surface = max(candidates)
+                        project_info.surface_m2 = best_surface
+                        project_info.is_small_project = best_surface < 240
+                        # On continue quand même pour extraire d'autres infos (adresse, EP, etc.)
+            else:
+                # Chercher la surface (cas générique, hors CERFA)
                 surface_patterns = [
-                    # CERFA (souvent: "Surface de plancher créée", "Surface de plancher : 123 m²", etc.)
                     r"surface\s*de\s*plancher\s*cr[ée]e\s*[:\s]*(\d[\d\s]*(?:[.,]\d+)?)\s*m\s*[²2]",
                     r"surface\s*de\s*plancher\s*(?:totale)?\s*[:\s]*(\d[\d\s]*(?:[.,]\d+)?)\s*m\s*[²2]",
                     r"surface\s*(?:de\s*plancher|totale)?\s*[:\s]*(\d+(?:[.,]\d+)?)\s*m",
                     r"(\d+(?:[.,]\d+)?)\s*m[²2]\s*(?:de\s*)?(?:surface|plancher)",
                     r"surface\s*[:\s]*(\d+(?:[.,]\d+)?)",
                 ]
-                
+
                 for pattern in surface_patterns:
                     match = re.search(pattern, text)
                     if match:
@@ -356,6 +499,89 @@ class DocumentAnalyzer:
                     project_info.infiltration = True
                 if ("rétention" in text or "retention" in text or "bassin" in text) and project_info.retention is None:
                     project_info.retention = True
+
+                # Surface imperméabilisée (m²)
+                impermeabilized_patterns = [
+                    r"surface\s*(?:imperméabilisée|imperméabilisée|imperméable)\s*[:\s]*(\d+(?:[.,]\d+)?)\s*m[²2]",
+                    r"(\d+(?:[.,]\d+)?)\s*m[²2]\s*(?:de\s*)?(?:surface\s*imperméabilisée|imperméable)",
+                    r"surface\s*imperméabilisée\s*[:\s]*(\d+(?:[.,]\d+)?)",
+                ]
+                for pattern in impermeabilized_patterns:
+                    match = re.search(pattern, text)
+                    if match and project_info.impermeabilized_area_m2 is None:
+                        try:
+                            s = float(match.group(1).replace(",", "."))
+                            project_info.impermeabilized_area_m2 = s
+                            break
+                        except ValueError:
+                            continue
+
+                # Surface d'infiltration (m²)
+                infiltration_area_patterns = [
+                    r"surface\s*(?:d['']infiltration|infiltration)\s*[:\s]*(\d+(?:[.,]\d+)?)\s*m[²2]",
+                    r"(\d+(?:[.,]\d+)?)\s*m[²2]\s*(?:de\s*)?(?:surface\s*d['']infiltration)",
+                ]
+                for pattern in infiltration_area_patterns:
+                    match = re.search(pattern, text)
+                    if match and project_info.infiltration_area_m2 is None:
+                        try:
+                            s = float(match.group(1).replace(",", "."))
+                            project_info.infiltration_area_m2 = s
+                            break
+                        except ValueError:
+                            continue
+
+                # Vitesse d'infiltration (mm/h)
+                infiltration_rate_patterns = [
+                    r"vitesse\s*(?:d['']infiltration|infiltration)\s*[:\s]*(\d+(?:[.,]\d+)?)\s*mm\s*/\s*h",
+                    r"(\d+(?:[.,]\d+)?)\s*mm\s*/\s*h\s*(?:vitesse\s*d['']infiltration)?",
+                ]
+                for pattern in infiltration_rate_patterns:
+                    match = re.search(pattern, text)
+                    if match and project_info.infiltration_rate_mm_h is None:
+                        try:
+                            v = float(match.group(1).replace(",", "."))
+                            project_info.infiltration_rate_mm_h = v
+                            break
+                        except ValueError:
+                            continue
+
+                # Test d'infiltration (présence)
+                if project_info.has_infiltration_test is None:
+                    test_patterns = [
+                        r"test\s*d['']infiltration",
+                        r"essai\s*d['']infiltration",
+                        r"test\s*infiltration",
+                        r"essai\s*infiltration",
+                    ]
+                    for pattern in test_patterns:
+                        if re.search(pattern, text):
+                            project_info.has_infiltration_test = True
+                            break
+                    if project_info.has_infiltration_test is None:
+                        project_info.has_infiltration_test = False
+
+                # Rétention pluie courante (> 15 mm)
+                if project_info.retention_rain_15mm is None:
+                    if re.search(r"rétention\s*(?:pluie\s*courante|pluies\s*courantes).*?(\d+(?:[.,]\d+)?)\s*mm", text):
+                        match = re.search(r"(\d+(?:[.,]\d+)?)\s*mm.*?pluie\s*courante", text)
+                        if match:
+                            try:
+                                val = float(match.group(1).replace(",", "."))
+                                project_info.retention_rain_15mm = val >= 15.0
+                            except ValueError:
+                                pass
+
+                # Rétention pluie moyenne/forte (> 45 mm)
+                if project_info.retention_rain_45mm is None:
+                    if re.search(r"rétention\s*(?:pluie\s*(?:moyenne|forte)|pluies\s*(?:moyennes|fortes)).*?(\d+(?:[.,]\d+)?)\s*mm", text):
+                        match = re.search(r"(\d+(?:[.,]\d+)?)\s*mm.*?pluie\s*(?:moyenne|forte)", text)
+                        if match:
+                            try:
+                                val = float(match.group(1).replace(",", "."))
+                                project_info.retention_rain_45mm = val >= 45.0
+                            except ValueError:
+                                pass
 
                 # Volumes (m3) - ex: "volume de stockage : 120 m3"
                 volume_patterns = [

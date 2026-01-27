@@ -1,0 +1,252 @@
+En dessous de 240 m²,il faut : 
+
+-Un formulaire d'instruction des projets soit présent et complété.
+
+-Un plan de masse 
+
+-Vérifier que le calcul de la surface imperméabilisée est bon 
+(surface imperméabilisée=surface des toitures non végétalisées + surface des stationnements, voiries et accès imperméabilisés + surface des terrasses sur support imperméable + surface des stationnements perméables sur support imperméables)
+
+-une cartographie du ruissellement
+
+vérifier si il y a un test d'infiltration :
+oui : vérifier si le calcul du volume à mettre en œuvre est supérieur à  0,015 m3 / m2 imperméabilisé.(Volume à mettre en œuvre = Surface imperméable x 0,045 – Surface d’infiltration  x Vitesse d’infiltration x 0,002)
+-non : vérifier si le calcul du volume à mettre en œuvre est supérieur à 0,015 m3 /m2 imperméabilisé(Volume utile à mettre en œuvre (en m3) = Surface imperméable (en m2) x 0,045)
+
+Au dessus ou égale à 240m², il faut :
+-la Note de calcul justifiant du dimensionnement du dispositif de rétention des eaux pluviales (DEA)
+
+-un plan de masse 
+
+un test de perméabilité de type Matsuo
+
+rétention de pluie >15 mm pour les pluies courantes
+
+rétention de pluie >45 mm pour les pluies moyennes à fortes
+
+vérifier si le calcul du volume à mettre en œuvre est supérieur à 0,015 m3 /m2 imperméabilisé(Surface imperméable (en m2) x 0,045 – Surface d’infiltration (en m2) x Vitesse d’infiltration (issue des tests, en mm/h) x 0,002)
+
+
+
+
+
+
+IDENTIFICATION_RULES: Dict[DocumentType, Dict[str, List[str]]] = {
+
+    DocumentType.CERFA: {
+        "filename": ["cerfa", "formulaire"],
+        "content": [
+            "cerfa", "demande de permis", "permis de construire",
+            "demande de permis d'aménager",          # ➕ ajouté
+            "permis d'aménager",                     # ➕ ajouté
+            "code de l'urbanisme", "déclaration préalable",
+            "n° 13406", "n° 13409"
+        ]
+    },
+
+    DocumentType.PC1: {
+        "filename": ["pc1", "situation", "localisation"],
+        "content": [
+            "plan de situation", "situation du terrain",
+            "localisation", "extrait cadastral", "cadastre",
+            "références cadastrales",                # ➕ ajouté
+            "parcelle cadastrale"                    # ➕ ajouté
+        ]
+    },
+
+    DocumentType.PC2: {
+        "filename": ["pc2", "masse", "implantation"],
+        "content": [
+            "plan de masse", "plan masse", "implantation",
+            "emprise au sol", "limites de propriété",
+            "voirie", "réseaux"
+        ]
+    },
+
+    DocumentType.PC3: {
+        "filename": ["pc3", "coupe", "profil"],
+        "content": [
+            "plan en coupe", "coupe du terrain", "profil",
+            "altimétrie", "niveau du sol", "terrain naturel",
+            "profil du terrain naturel"               # ➕ ajouté
+        ]
+    },
+
+    DocumentType.PC4: {
+        "filename": ["pc4", "notice", "descriptif", "description"],
+        "content": [
+            "notice descriptive", "notice explicative",
+            "description du terrain", "présentation du projet",
+            "état initial", "projet architectural",
+            "notice décrivant le terrain et le projet",  # ➕ ajouté
+            "courte description du projet"               # ➕ ajouté
+        ]
+    },
+
+    DocumentType.PC5: {
+        "filename": ["pc5", "facade", "façade", "toiture", "elevation"],
+        "content": [
+            "plan des façades", "façades", "toitures",
+            "élévation", "vue de face", "pignon",
+            "plan des façades et des toitures"          # ➕ ajouté
+        ]
+    },
+
+    DocumentType.PC6: {
+        "filename": ["pc6", "insertion", "integration", "3d", "perspective"],
+        "content": [
+            "insertion", "intégration", "document graphique",
+            "perspective", "simulation", "photomontage"
+        ]
+    },
+
+    DocumentType.PC7: {
+        "filename": ["pc7", "photo", "environnement", "proche"],
+        "content": [
+            "photographie", "environnement proche",
+            "vue rapprochée", "abords immédiats",
+            "photographie environnement proche"        # ➕ ajouté
+        ]
+    },
+
+    DocumentType.PC8: {
+        "filename": ["pc8", "photo", "paysage", "lointain"],
+        "content": [
+            "photographie", "paysage lointain",
+            "vue éloignée", "environnement large",
+            "photographie paysage lointain"            # ➕ ajouté
+        ]
+    },
+
+    DocumentType.AVIS_EP: {
+        "filename": ["ep", "eaux pluviales", "pluvial"],
+        "content": [
+            "eaux pluviales", "gestion des eaux",
+            "infiltration", "rétention", "bassin",
+            "loi sur l'eau"                             # ➕ ajouté
+        ]
+    },
+
+    DocumentType.AVIS_DEA: {
+        "filename": ["dea", "assainissement"],
+        "content": [
+            "direction de l'eau", "assainissement",
+            "raccordement", "eaux usées",
+            "installations individuelles d'assainissement"  # ➕ ajouté
+        ]
+    },
+
+    DocumentType.COUPE_BASSIN: {
+        "filename": ["bassin", "coupe bassin", "retention"],
+        "content": [
+            "coupe bassin", "bassin de rétention",
+            "ouvrage de stockage", "volume de stockage"
+        ]
+    },
+
+}
+
+Liste **complète des règles** (obligations / interdictions) extraites de la *Notice – Zonage pluvial (Grand Chalon, mai 2023)* 
+
+## 1) Champ d’application (règles de portée)
+
+1. Le zonage pluvial s’applique uniquement aux **“eaux pluviales strictes”** (précipitations : pluie/neige/grêle) et **ne s’applique pas** aux eaux de source, drainage, lavage, etc. (chap. 8).
+2. Il s’applique à **tout aménagement** susceptible de modifier l’écoulement des eaux pluviales : en zone urbaine ou hors zone urbaine, public ou privé, soumis ou non à autorisation d’urbanisme, quel que soit l’exutoire, y compris extension, démolition/reconstruction, réaménagement ; et en requalification de voirie dès lors que ce n’est pas uniquement une réfection de revêtement (chap. 8).
+
+## 2) Règles communes à tous les projets (toutes tailles, tous niveaux de pluie)
+
+3. Les eaux pluviales doivent être gérées via des **dispositifs séparatifs** (propres aux EP/ruissellement), **sans aucune connexion** avec des eaux usées (chap. 23.1).
+4. Les surfaces présentant des **risques particuliers de pollution** chronique et/ou accidentelle doivent être équipées de **dispositifs spécifiques** (chap. 21.1).
+5. Un **entretien approprié** des dispositifs doit être assuré ; un **cahier d’entretien** doit être mis en place, tenu à jour et mis à disposition (chap. 21.1).
+6. Les **débourbeurs-déshuileurs / séparateurs à hydrocarbures** sont **interdits** pour traiter la **pollution chronique** des eaux pluviales (usage à limiter à des cas très particuliers à fortes concentrations d’hydrocarbures flottants : distribution carburants, dépotage, VHU…) (chap. 21.1).
+
+## 3) Seuil “petits” / “gros” projets
+
+7. **Gros projets** : règles du volet 3 applicables si la somme des surfaces imperméables est **> 240 m²** (chap. 10).
+8. **Petits projets** : règles du volet 4 applicables si la somme des surfaces imperméables est **< 240 m²** (chap. 15).
+9. En cas d’**impossibilité technique** de respecter les règles “petits projets”, celle-ci doit être **clairement démontrée** (chap. 15).
+
+## 4) Gros projets (> 240 m²) — Pluies courantes
+
+10. Tout aménagement doit assurer l’**infiltration et/ou l’évapotranspiration à la source** des pluies courantes via :
+
+    * des surfaces perméables et/ou végétalisées, et
+    * pour chaque surface imperméabilisée, un **espace dédié** de capacité **≥ 15 L/m²** imperméabilisé, au plus près, favorisant infiltration/évapotranspiration (chap. 11.1).
+11. Pour ces espaces “pluies courantes” : utilisation **exclusive** de solutions de **faible profondeur (< 1 m)** ; ces espaces **ne doivent pas** être connectés au réseau d’eaux pluviales (chap. 11.1).
+12. Les **puits d’infiltration** ne sont **pas appropriés** pour la gestion des pluies courantes (chap. 11.1).
+13. Dans une opération d’ensemble (ex. lotissement), la règle “pluies courantes” doit être appliquée **sur chaque lot** (chap. 11.2).
+14. Des **dérogations** à la règle “pluies courantes” peuvent être envisagées notamment :
+
+    * pour surfaces à risque particulier de pollution (application de dispositifs adaptés),
+    * si d’autres réglementations **interdisent** l’infiltration localement (chap. 11.3).
+
+## 5) Gros projets (> 240 m²) — Pluies moyennes à fortes (“zéro rejet”)
+
+15. Règle générale : tout aménagement doit assurer l’**infiltration** des écoulements des pluies moyennes à fortes (principe **“zéro rejet”**), en respectant la période de retour d’insuffisance minimale (chap. 12.1 + 12.6.3).
+16. Une **dérogation** avec **débit de rejet régulé** peut être envisagée (pollution accidentelle / interdiction réglementaire d’infiltrer / infiltration particulièrement complexe) sous conditions (chap. 12.2 + 12.5.1).
+17. Opérations d’ensemble : si des dispositifs “moyennes à fortes” sont déjà prévus/réalisés dans les espaces communs, seuls les lots appliquent la règle “pluies courantes”, **sauf** si un lot imperméabilise plus que prévu : il doit gérer l’**imperméabilisation supplémentaire** selon les règles “moyennes à fortes” (chap. 12.2).
+
+## 6) Gros projets — Exigences de conception des ouvrages (moyennes à fortes)
+
+18. Les solutions doivent assurer : **fonctionnement gravitaire** et **entretien/contrôle aisés** ; elles doivent être **totalement accessibles** ; si enterrées, un **accès spécifique et sécurisé** doit être prévu (chap. 12.3.1).
+19. Les **raccordements** des **surverses** (débordements) des dispositifs “moyennes à fortes” sur les **ouvrages publics enterrés** sont **interdits** ; les surverses doivent être **visibles** (dérogation possible si justifiée) (chap. 12.3.1).
+20. Les **puits d’infiltration** sont **interdits** pour la gestion des eaux de **voiries** (chap. 12.3.1).
+21. Les puits d’infiltration (quand envisagés hors cas interdits/déconseillés) ne peuvent l’être qu’à condition :
+
+    * qu’un dispositif de **faible profondeur** infiltre/filtre les **pluies courantes** en amont,
+    * de conserver **≥ 1 m** de zone non saturée entre fond du puits et toit de nappe,
+    * de **proscrire** tout produit toxique pour l’entretien des toitures connectées (chap. 12.3.1).
+
+## 7) Gros projets — Tests d’infiltration (obligatoires)
+
+22. Des **tests d’infiltration représentatifs** sont **obligatoires**, sauf zones où l’infiltration est interdite par d’autres réglementations (chap. 12.4).
+23. Pour être “représentatifs”, les tests doivent respecter **toutes** ces conditions : in situ, dans le secteur et à la profondeur visée, suffisamment nombreux, éviter méthodes compactantes / trop incertaines (éviter tests en forage), interprétation claire + coefficients de sécurité raisonnables (chap. 12.4).
+24. Des tests représentatifs sont une **condition** à une éventuelle dérogation avec rejet régulé (chap. 12.4).
+
+## 8) Gros projets — Dérogation + rejet régulé (conditions et calcul du débit)
+
+25. Un rejet régulé ne peut être autorisé que si :
+
+    * un rejet est possible vers réseau hydrographique superficiel ou ouvrage public,
+    * l’infiltration est démontrée **trop complexe** (tests représentatifs + preuve que tous efforts favorables à l’infiltration ont été réalisés),
+    * l’autorisation du gestionnaire de l’exutoire est obtenue avant dépôt du dossier, et le raccordement est conforme à ses conditions,
+    * le débit maximal imposé est respecté via un dispositif de régulation adapté, entretenable et contrôlable,
+    * et, si possible, le dispositif favorise quand même l’infiltration autant que possible (chap. 12.5.1).
+26. Si dérogation + rejet vers ouvrage géré par le Grand Chalon (et sans autre contrainte), **débit max = 5 L/s/ha**, appliqué à la surface potentiellement collectée (certaines surfaces naturelles aval non comptées) (chap. 12.5.3).
+27. Si le débit calculé est **< 1 L/s**, le débit autorisé est porté à **1 L/s** (sauf cas particulier de régulation sur toiture stockante) (chap. 12.5.3).
+28. Opérations d’ensemble (lots de maisons individuelles) : si rejet régulé autorisé, la règle de débit max s’applique **à l’échelle de l’opération**, et la régulation ne doit pas être faite “à la parcelle” mais dans les **espaces communs** avec gestionnaire/responsabilités clairement identifiés (chap. 12.5.4).
+
+## 9) Gros projets — Dimensionnement (moyennes à fortes)
+
+29. Les dispositifs (rétention-infiltration ou régulation) doivent être dimensionnés par la **méthode des pluies**, avec :
+
+    * surface active calculée via coefficients de ruissellement de référence,
+    * débit de vidange = infiltration moyenne (tests) + éventuel débit de fuite autorisé,
+    * période de retour d’insuffisance ≥ minimale,
+    * statistiques pluviométriques de référence (chap. 12.6.1).
+30. Coefficients de ruissellement unitaires à utiliser pour la surface active : **1** (imperméable), **0,5** (perméable/végétalisé aménagé), **0,2** (pleine terre), **0** (déconnectée) (chap. 12.6.2).
+31. Période de retour d’insuffisance minimale à assurer : **30 ans** (chap. 12.6.3).
+
+## 10) Gros projets — Pluies exceptionnelles (débordements)
+
+32. Tout projet doit **anticiper** les conséquences des pluies exceptionnelles (trajectoires + enjeux exposés) et organiser les débordements selon un **“parcours à moindre dommage”** (précautions constructives + surverses/cheminements en surface) (chap. 13.1).
+33. Les raccordements des surverses sur ouvrages publics enterrés sont **interdits** ; surverses **visibles** (dérogation possible si justifiée) (chap. 13.1).
+
+## 11) Petits projets (< 240 m²) — Règles générales + dispositifs
+
+34. Le projet doit assurer l’**infiltration** des écoulements issus des surfaces imperméables en respectant la règle de dimensionnement (chap. 16 + 18).
+35. Il doit minimiser les conséquences des pluies exceptionnelles (trajectoire, vulnérabilité, surverse/cheminement en surface, “parcours à moindre dommage”) (chap. 16).
+36. Raccordements des surverses sur ouvrages publics enterrés : **interdits** ; surverses **visibles** (dérogation possible si justifiée) (chap. 16).
+37. Les solutions doivent permettre : **fonctionnement gravitaire** (dispositifs de relevage **interdits**) et **accessibilité totale** pour entretien/contrôle (chap. 17.1).
+38. Puits d’infiltration : **interdits** pour eaux de **voiries** ; et, s’ils sont envisagés hors contextes défavorables, ils ne le sont qu’aux mêmes **3 conditions** (dispositif faible profondeur en amont + 1 m zone non saturée + pas de produits toxiques sur toitures) (chap. 17.1).
+
+## 12) Petits projets — Dimensionnement (formules)
+
+39. Si **aucun test d’infiltration** : volume (m³) = **Surface imperméable (m²) × 0,045** (chap. 18.2).
+40. Si **tests représentatifs** : volume (m³) = **Surface imperméable × 0,045 – Surface d’infiltration × Vitesse d’infiltration (mm/h) × 0,002** (chap. 18.3).
+41. Le volume calculé ne peut pas être inférieur à **0,015 m³ par m² imperméabilisé** (chap. 18.3).
+
+## 13) Autres règles spécifiques
+
+42. **Extensions de sites existants** : les règles (pluies courantes + moyennes à fortes) s’appliquent à la surface de l’extension **augmentée de 50%** (chap. 23.3.2).
+43. **Busage de fossés** : **interdit sans autorisation** du Grand Chalon ; seuls les busages pour franchissements (entrées charretières) et cheminements piétons peuvent être envisagés (chap. 23.5).

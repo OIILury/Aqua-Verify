@@ -1,18 +1,26 @@
 """
 Routes API pour Aqua Verify
 """
+
+import logging
 from fastapi import APIRouter, UploadFile, File, HTTPException, Query
 from typing import List
 from ..models.document import AnalysisReport, ChatRequest, ChatMessage
 from ..services.extractor import TextExtractor
 from ..services.analyzer import DocumentAnalyzer
 from ..services.chatbot import ChatbotService
+from ..services.jan_client import JanAIClient
+from ..services.rag_service import RAGService
 
 
 router = APIRouter()
+logger = logging.getLogger("aqua_verify")
 
 # Instance du chatbot (stateful pour garder le contexte)
 chatbot = ChatbotService()
+# Client IA Jan.ai (utilisé pour les réponses enrichies)
+jan_client = JanAIClient()
+rag_service = RAGService(jan_client=jan_client)
 
 
 @router.post("/analyze", response_model=AnalysisReport)
@@ -83,11 +91,42 @@ async def chat(request: ChatRequest):
     # Mettre à jour le rapport si fourni
     if request.report:
         chatbot.set_report(request.report)
-    
-    # Générer la réponse
+
+    # Essayer d'abord d'utiliser Jan.ai via RAGService (même sans retrieval pour l'instant),
+    # avec fallback sur le chatbot rule-based.
+    report = request.report or getattr(chatbot, "report", None)
+
+    if report:
+        try:
+            ai_response = await rag_service.answer(report=report, user_message=request.message)
+            return ChatMessage(role="assistant", content=ai_response)
+        except Exception as e:
+            # En cas d'erreur d'appel Jan.ai, on retombe sur le chatbot rule-based
+            logger.exception("Échec appel Jan.ai (fallback chatbot rule-based): %s", e)
+
+    # Fallback : chatbot rule-based actuel
     response = chatbot.get_response(request.message)
-    
     return ChatMessage(role="assistant", content=response)
+
+
+@router.get("/jan/ping")
+async def jan_ping():
+    """
+    Vérifie rapidement que Jan.ai répond.
+
+    Utile pour diagnostiquer si le chatbot utilise bien Jan.ai ou s'il est en fallback.
+    """
+    try:
+        content = await jan_client.chat(
+            [
+                {"role": "system", "content": "Tu réponds uniquement 'pong'."},
+                {"role": "user", "content": "ping"},
+            ]
+        )
+        return {"ok": True, "response": content}
+    except Exception as e:
+        logger.exception("Jan.ai ping failed: %s", e)
+        return {"ok": False, "error": str(e)}
 
 
 @router.get("/health")

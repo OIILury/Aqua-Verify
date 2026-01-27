@@ -26,6 +26,10 @@ class DocumentType(str, Enum):
     AVIS_DEA = "AVIS_DEA"  # Avis DEA
     DPC = "DPC"  # Document de présentation du projet
     COUPE_BASSIN = "COUPE_BASSIN"  # Coupe bassin
+    CARTOGRAPHIE_RUISSELLEMENT = "CARTOGRAPHIE_RUISSELLEMENT"  # Cartographie du ruissellement
+    NOTE_CALCUL_DEA = "NOTE_CALCUL_DEA"  # Note de calcul DEA
+    TEST_INFILTRATION = "TEST_INFILTRATION"  # Test d'infiltration
+    TEST_MATSUO = "TEST_MATSUO"  # Test de perméabilité Matsuo
     AUTRE = "AUTRE"  # Document non identifié
 
 
@@ -61,6 +65,14 @@ class ProjectInfo(BaseModel):
     discharge_flow_l_s: Optional[float] = None  # débit de fuite (L/s)
     infiltration: Optional[bool] = None  # infiltration mentionnée / prévue
     retention: Optional[bool] = None  # rétention/stockage mentionné / prévu
+    
+    # Données supplémentaires pour calculs de conformité
+    infiltration_area_m2: Optional[float] = None  # surface d'infiltration (m²)
+    infiltration_rate_mm_h: Optional[float] = None  # vitesse d'infiltration (mm/h) issue des tests
+    has_infiltration_test: Optional[bool] = None  # présence d'un test d'infiltration
+    retention_rain_15mm: Optional[bool] = None  # rétention > 15 mm pour pluies courantes
+    retention_rain_45mm: Optional[bool] = None  # rétention > 45 mm pour pluies moyennes à fortes
+    calculated_volume_m3: Optional[float] = None  # volume calculé selon les formules réglementaires
 
 
 class ComplianceIssue(BaseModel):
