@@ -1,0 +1,24 @@
+# Fichiers / dossiers spécifiques à chaque machine
+
+# Environnements virtuels Python
+venv/
+ony_/backend/venv/
+
+# Dépendances Node
+node_modules/
+ony_/frontend/node_modules/
+
+# Fichiers Python compilés / cache
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Fichiers d'environnement
+.env
+
+# OS / éditeurs
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
